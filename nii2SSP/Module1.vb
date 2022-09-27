@@ -48,18 +48,87 @@ Module Module1
                     BigEndian = True
                 End If
                 reader.ReadBytes(38)
-                MatrixX = reader.ReadInt16
-                MatrixY = reader.ReadInt16
-                SliceNo = reader.ReadInt16
+
+                Dim TempBuff(1) As Byte
+                TempBuff(0) = reader.ReadByte
+                TempBuff(1) = reader.ReadByte
+                If BigEndian Then
+                    Array.Reverse(TempBuff)
+                End If
+                MatrixX = BitConverter.ToInt16(TempBuff, 0)
+
+                TempBuff(0) = reader.ReadByte
+                TempBuff(1) = reader.ReadByte
+                If BigEndian Then
+                    Array.Reverse(TempBuff)
+                End If
+                MatrixY = BitConverter.ToInt16(TempBuff, 0)
+
+                TempBuff(0) = reader.ReadByte
+                TempBuff(1) = reader.ReadByte
+                If BigEndian Then
+                    Array.Reverse(TempBuff)
+                End If
+                SliceNo = BitConverter.ToInt16(TempBuff, 0)
+
                 reader.ReadBytes(22)
-                DataType = reader.ReadInt16
+                TempBuff(0) = reader.ReadByte
+                TempBuff(1) = reader.ReadByte
+                If BigEndian Then
+                    Array.Reverse(TempBuff)
+                End If
+                DataType = BitConverter.ToInt16(TempBuff, 0)
+
                 reader.ReadBytes(8)
-                SizeX = reader.ReadSingle
-                SizeY = reader.ReadSingle
-                SizeZ = reader.ReadSingle
+
+                ReDim TempBuff(3)
+                TempBuff(0) = reader.ReadByte
+                TempBuff(1) = reader.ReadByte
+                TempBuff(2) = reader.ReadByte
+                TempBuff(3) = reader.ReadByte
+                If BigEndian Then
+                    Array.Reverse(TempBuff)
+                End If
+                SizeX = BitConverter.ToSingle(TempBuff, 0)
+
+                TempBuff(0) = reader.ReadByte
+                TempBuff(1) = reader.ReadByte
+                TempBuff(2) = reader.ReadByte
+                TempBuff(3) = reader.ReadByte
+                If BigEndian Then
+                    Array.Reverse(TempBuff)
+                End If
+                SizeY = BitConverter.ToSingle(TempBuff, 0)
+
+                TempBuff(0) = reader.ReadByte
+                TempBuff(1) = reader.ReadByte
+                TempBuff(2) = reader.ReadByte
+                TempBuff(3) = reader.ReadByte
+                If BigEndian Then
+                    Array.Reverse(TempBuff)
+                End If
+                SizeZ = BitConverter.ToSingle(TempBuff, 0)
+
                 reader.ReadBytes(20)
-                RescaleSlope = reader.ReadSingle
-                RescaleIntercept = reader.ReadSingle
+
+                TempBuff(0) = reader.ReadByte
+                TempBuff(1) = reader.ReadByte
+                TempBuff(2) = reader.ReadByte
+                TempBuff(3) = reader.ReadByte
+                If BigEndian Then
+                    Array.Reverse(TempBuff)
+                End If
+                RescaleSlope = BitConverter.ToSingle(TempBuff, 0)
+
+                TempBuff(0) = reader.ReadByte
+                TempBuff(1) = reader.ReadByte
+                TempBuff(2) = reader.ReadByte
+                TempBuff(3) = reader.ReadByte
+                If BigEndian Then
+                    Array.Reverse(TempBuff)
+                End If
+                RescaleIntercept = BitConverter.ToSingle(TempBuff, 0)
+
             End Using
         End Using
         If BigEndian = True Then
