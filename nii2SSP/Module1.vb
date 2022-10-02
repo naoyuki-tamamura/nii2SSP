@@ -2,8 +2,8 @@
 
 Module Module1
     Sub Main(args() As String)
-        Dim SourceFilePath As String = Nothing
 
+        Dim SourceFilePath As String = Nothing
         If args.Length < 1 Then
             Console.WriteLine("usage hogehoge.exe Source")
             Environment.Exit(1)
@@ -32,7 +32,6 @@ Module Module1
         Dim RescaleSlope As Single = 1
         Dim RescaleIntercept As Single = 0
         Dim DataType As Short = 0
-        Dim HeaderBuff() As Byte
         Dim SizeX As Single = 0
         Dim SizeY As Single = 0
         Dim SizeZ As Single = 0
@@ -49,32 +48,31 @@ Module Module1
                 End If
                 reader.ReadBytes(38)
 
-                Dim TempBuff(1) As Byte
-                TempBuff(0) = reader.ReadByte
-                TempBuff(1) = reader.ReadByte
-                If BigEndian Then
+                Dim TempBuff() As Byte
+                ReDim TempBuff(1)
+
+                TempBuff = reader.ReadBytes(2)
+                If BigEndian = True Then
                     Array.Reverse(TempBuff)
                 End If
                 MatrixX = BitConverter.ToInt16(TempBuff, 0)
 
-                TempBuff(0) = reader.ReadByte
-                TempBuff(1) = reader.ReadByte
-                If BigEndian Then
+                TempBuff = reader.ReadBytes(2)
+                If BigEndian = True Then
                     Array.Reverse(TempBuff)
                 End If
                 MatrixY = BitConverter.ToInt16(TempBuff, 0)
 
-                TempBuff(0) = reader.ReadByte
-                TempBuff(1) = reader.ReadByte
-                If BigEndian Then
+                TempBuff = reader.ReadBytes(2)
+                If BigEndian = True Then
                     Array.Reverse(TempBuff)
                 End If
                 SliceNo = BitConverter.ToInt16(TempBuff, 0)
 
                 reader.ReadBytes(22)
-                TempBuff(0) = reader.ReadByte
-                TempBuff(1) = reader.ReadByte
-                If BigEndian Then
+
+                TempBuff = reader.ReadBytes(2)
+                If BigEndian = True Then
                     Array.Reverse(TempBuff)
                 End If
                 DataType = BitConverter.ToInt16(TempBuff, 0)
@@ -82,59 +80,40 @@ Module Module1
                 reader.ReadBytes(8)
 
                 ReDim TempBuff(3)
-                TempBuff(0) = reader.ReadByte
-                TempBuff(1) = reader.ReadByte
-                TempBuff(2) = reader.ReadByte
-                TempBuff(3) = reader.ReadByte
-                If BigEndian Then
+                TempBuff = reader.ReadBytes(4)
+                If BigEndian = True Then
                     Array.Reverse(TempBuff)
                 End If
                 SizeX = BitConverter.ToSingle(TempBuff, 0)
 
-                TempBuff(0) = reader.ReadByte
-                TempBuff(1) = reader.ReadByte
-                TempBuff(2) = reader.ReadByte
-                TempBuff(3) = reader.ReadByte
-                If BigEndian Then
+                TempBuff = reader.ReadBytes(4)
+                If BigEndian = True Then
                     Array.Reverse(TempBuff)
                 End If
                 SizeY = BitConverter.ToSingle(TempBuff, 0)
 
-                TempBuff(0) = reader.ReadByte
-                TempBuff(1) = reader.ReadByte
-                TempBuff(2) = reader.ReadByte
-                TempBuff(3) = reader.ReadByte
-                If BigEndian Then
+                TempBuff = reader.ReadBytes(4)
+                If BigEndian = True Then
                     Array.Reverse(TempBuff)
                 End If
                 SizeZ = BitConverter.ToSingle(TempBuff, 0)
 
                 reader.ReadBytes(20)
 
-                TempBuff(0) = reader.ReadByte
-                TempBuff(1) = reader.ReadByte
-                TempBuff(2) = reader.ReadByte
-                TempBuff(3) = reader.ReadByte
-                If BigEndian Then
+                TempBuff = reader.ReadBytes(4)
+                If BigEndian = True Then
                     Array.Reverse(TempBuff)
                 End If
                 RescaleSlope = BitConverter.ToSingle(TempBuff, 0)
 
-                TempBuff(0) = reader.ReadByte
-                TempBuff(1) = reader.ReadByte
-                TempBuff(2) = reader.ReadByte
-                TempBuff(3) = reader.ReadByte
-                If BigEndian Then
+                TempBuff = reader.ReadBytes(4)
+                If BigEndian = True Then
                     Array.Reverse(TempBuff)
                 End If
                 RescaleIntercept = BitConverter.ToSingle(TempBuff, 0)
 
             End Using
         End Using
-        If BigEndian = True Then
-            Console.WriteLine("BigEndian!!")
-            Environment.Exit(1)
-        End If
 
         Dim TotalPixelNum As Long = MatrixX * MatrixY * SliceNo
 
@@ -144,7 +123,28 @@ Module Module1
             ' streamから読み込むためのBinaryReaderを作成
             Using reader As New BinaryReader(stream)
                 '画素値取り込み
-                HeaderBuff = reader.ReadBytes(352)
+
+                Dim BytesPerPixel As Long
+
+                Select Case DataType
+                    Case 1
+                        BytesPerPixel = 1
+                    Case 2
+                        BytesPerPixel = 1
+                    Case 4
+                        BytesPerPixel = 2
+                    Case 8
+                        BytesPerPixel = 4
+                    Case 16
+                        BytesPerPixel = 4
+                    Case 64
+                        BytesPerPixel = 8
+                    Case 512
+                        BytesPerPixel = 4
+                End Select
+
+                Dim TempBuff(BytesPerPixel) As Byte
+                reader.ReadBytes(352)
                 For i = 0 To TotalPixelNum - 1
                     Select Case DataType
                         Case 1
@@ -152,15 +152,35 @@ Module Module1
                         Case 2
                             DestBuff(i) = CDbl(reader.ReadByte) * RescaleSlope + RescaleIntercept
                         Case 4
-                            DestBuff(i) = CDbl(reader.ReadInt16) * RescaleSlope + RescaleIntercept
+                            TempBuff = reader.ReadBytes(2)
+                            If BigEndian = True Then
+                                Array.Reverse(TempBuff)
+                            End If
+                            DestBuff(i) = CDbl(BitConverter.ToInt16(TempBuff, 0)) * RescaleSlope + RescaleIntercept
                         Case 8
-                            DestBuff(i) = CDbl(reader.ReadInt32) * RescaleSlope + RescaleIntercept
+                            TempBuff = reader.ReadBytes(4)
+                            If BigEndian = True Then
+                                Array.Reverse(TempBuff)
+                            End If
+                            DestBuff(i) = CDbl(BitConverter.ToInt32(TempBuff, 0)) * RescaleSlope + RescaleIntercept
                         Case 16
-                            DestBuff(i) = CDbl(reader.ReadSingle) * RescaleSlope + RescaleIntercept
+                            TempBuff = reader.ReadBytes(4)
+                            If BigEndian = True Then
+                                Array.Reverse(TempBuff)
+                            End If
+                            DestBuff(i) = CDbl(BitConverter.ToSingle(TempBuff, 0)) * RescaleSlope + RescaleIntercept
                         Case 64
-                            DestBuff(i) = CDbl(reader.ReadDouble) * RescaleSlope + RescaleIntercept
+                            TempBuff = reader.ReadBytes(8)
+                            If BigEndian = True Then
+                                Array.Reverse(TempBuff)
+                            End If
+                            DestBuff(i) = CDbl(BitConverter.ToDouble(TempBuff, 0)) * RescaleSlope + RescaleIntercept
                         Case 512
-                            DestBuff(i) = CDbl(reader.ReadUInt16) * RescaleSlope + RescaleIntercept
+                            TempBuff = reader.ReadBytes(4)
+                            If BigEndian = True Then
+                                Array.Reverse(TempBuff)
+                            End If
+                            DestBuff(i) = CDbl(BitConverter.ToUInt16(TempBuff, 0)) * RescaleSlope + RescaleIntercept
                     End Select
                 Next
             End Using
@@ -174,6 +194,7 @@ Module Module1
                 Next
             End Using
         End Using
+
         Using stream As Stream = File.OpenWrite(HdrFilePath)
             ' streamに書き込むためのBinaryWriterを作成
             Using writer As New StreamWriter(stream)
