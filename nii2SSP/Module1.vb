@@ -127,60 +127,55 @@ Module Module1
                 Dim BytesPerPixel As Long
 
                 Select Case DataType
-                    Case 1
-                        BytesPerPixel = 1
                     Case 2
                         BytesPerPixel = 1
+
                     Case 4
                         BytesPerPixel = 2
+
                     Case 8
                         BytesPerPixel = 4
+
                     Case 16
                         BytesPerPixel = 4
+
                     Case 64
                         BytesPerPixel = 8
+
                     Case 512
                         BytesPerPixel = 4
+
                 End Select
 
-                Dim TempBuff(BytesPerPixel) As Byte
                 reader.ReadBytes(352)
+
                 For i = 0 To TotalPixelNum - 1
+                    Dim TempBuff(BytesPerPixel) As Byte
+
+                    TempBuff = reader.ReadBytes(BytesPerPixel)
+                    If BigEndian = True Then
+                        Array.Reverse(TempBuff)
+                    End If
+
                     Select Case DataType
-                        Case 1
-                            DestBuff(i) = CDbl(reader.ReadByte) * RescaleSlope + RescaleIntercept
                         Case 2
-                            DestBuff(i) = CDbl(reader.ReadByte) * RescaleSlope + RescaleIntercept
+                            DestBuff(i) = CDbl(TempBuff(0)) * RescaleSlope + RescaleIntercept
+
                         Case 4
-                            TempBuff = reader.ReadBytes(2)
-                            If BigEndian = True Then
-                                Array.Reverse(TempBuff)
-                            End If
                             DestBuff(i) = CDbl(BitConverter.ToInt16(TempBuff, 0)) * RescaleSlope + RescaleIntercept
+
                         Case 8
-                            TempBuff = reader.ReadBytes(4)
-                            If BigEndian = True Then
-                                Array.Reverse(TempBuff)
-                            End If
                             DestBuff(i) = CDbl(BitConverter.ToInt32(TempBuff, 0)) * RescaleSlope + RescaleIntercept
+
                         Case 16
-                            TempBuff = reader.ReadBytes(4)
-                            If BigEndian = True Then
-                                Array.Reverse(TempBuff)
-                            End If
                             DestBuff(i) = CDbl(BitConverter.ToSingle(TempBuff, 0)) * RescaleSlope + RescaleIntercept
+
                         Case 64
-                            TempBuff = reader.ReadBytes(8)
-                            If BigEndian = True Then
-                                Array.Reverse(TempBuff)
-                            End If
                             DestBuff(i) = CDbl(BitConverter.ToDouble(TempBuff, 0)) * RescaleSlope + RescaleIntercept
+
                         Case 512
-                            TempBuff = reader.ReadBytes(4)
-                            If BigEndian = True Then
-                                Array.Reverse(TempBuff)
-                            End If
                             DestBuff(i) = CDbl(BitConverter.ToUInt16(TempBuff, 0)) * RescaleSlope + RescaleIntercept
+
                     End Select
                 Next
             End Using
